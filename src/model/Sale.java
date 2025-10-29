@@ -3,10 +3,9 @@ package model;
 import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDateTime;
-import payment.Payment;
 
-public class Transaction {
-    private String transactionId;
+public class Sale {
+    private String saleId;
     private Customer customer;
     private List<Product> products;
     private Payment payment;
@@ -15,8 +14,8 @@ public class Transaction {
     private double finalAmount;
     private LocalDateTime timestamp;
 
-    public Transaction(String transactionId, Customer customer, List<Product> products, Payment payment) {
-        this.transactionId = transactionId;
+    public Sale(String saleId, Customer customer, List<Product> products, Payment payment) {
+        this.saleId = saleId;
         this.customer = customer;
         this.products = new ArrayList<>(products);
         this.payment = payment;
@@ -31,7 +30,7 @@ public class Transaction {
     }
 
     // Getters
-    public String getTransactionId() { return transactionId; }
+    public String getSaleId() { return saleId; }
     public Customer getCustomer() { return customer; }
     public List<Product> getProducts() { return new ArrayList<>(products); }
     public Payment getPayment() { return payment; }
@@ -42,7 +41,7 @@ public class Transaction {
 
     @Override
     public String toString() {
-        return String.format("Transaction ID: %s, Customer: %s, Total: Rs. %.2f, Final: Rs. %.2f",
-                transactionId, customer.getCustomerType(), totalAmount, finalAmount);
+        return String.format("Sale ID: %s, Customer: %s, Total: Rs. %.2f, Final: Rs. %.2f",
+                saleId, customer.getCustomerType(), totalAmount, finalAmount);
     }
 }

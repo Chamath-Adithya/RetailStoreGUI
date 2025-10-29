@@ -7,27 +7,27 @@ A comprehensive Java Swing application demonstrating Object-Oriented Programming
 ```
 RetailStoreGUI/
 ├── README.md
-├── data/               # CSV files for data persistence
-│   ├── products.csv
-│   ├── users.csv
-│   └── transactions.csv
-├── lib/                # (Empty for now; add .jar libs later if needed)
-├── bin/                # Compiled .class files
-└── src/                # All your Java source code lives here
-    ├── main/           # GUI and main logic
-    │   └── App.java
-    ├── model/          # Data models (Encapsulation + Inheritance)
-    │   ├── Product.java
-    │   ├── Customer.java
-    │   ├── VIPCustomer.java
-    │   ├── User.java
-    │   └── Transaction.java
-    ├── payment/        # Abstraction examples (Payment types)
-    │   ├── Payment.java
-    │   ├── CashPayment.java
-    │   └── CardPayment.java
-    └── utils/          # Utilities (helpers, calculations, file I/O)
-        └── StoreUtils.java
+├── lib/                        # External libraries (if needed)
+├── src/
+│   ├── App.java                # Main entry point
+│   ├── gui/                    # GUI classes (Swing forms, panels, frames)
+│   │   ├── MainFrame.java
+│   │   ├── ProductPanel.java
+│   │   ├── CustomerPanel.java
+│   │   └── BillingPanel.java
+│   ├── model/                  # Business logic and OOP models
+│   │   ├── Product.java
+│   │   ├── Customer.java
+│   │   ├── Sale.java
+│   │   └── Payment.java
+│   ├── service/                # Classes handling logic between model and GUI
+│   │   ├── ProductService.java
+│   │   ├── CustomerService.java
+│   │   └── SalesService.java
+│   └── util/                   # Helper functions (like file saving, validation)
+│       ├── FileHandler.java
+│       └── Validator.java
+└── bin/                        # Compiled .class files
 ```
 
 ## 🧩 OOP Concepts Demonstrated
@@ -100,10 +100,9 @@ public class CashPayment extends Payment {
 In VS Code terminal:
 
 ```bash
-cd src
-javac main/App.java model/*.java payment/*.java utils/*.java -d ../bin
-cd ../bin
-java main.App
+javac -d bin src/App.java src/model/*.java src/payment/*.java src/util/*.java src/service/*.java src/gui/*.java
+cd bin
+java App
 ```
 
 ## 🎯 Features
@@ -121,9 +120,9 @@ java main.App
 
 ### Additional OOP Concepts in New Features:
 
-#### 5️⃣ **Composition** (Transaction.java)
+#### 5️⃣ **Composition** (Sale.java)
 ```java
-public class Transaction {
+public class Sale {
     private Customer customer;
     private List<Product> products;
     private Payment payment;

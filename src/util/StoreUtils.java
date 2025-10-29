@@ -1,11 +1,9 @@
-package utils;
+package util;
 
-import model.*;
-import payment.*;
 import java.io.*;
-import java.util.*;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
+import model.*;
 
 public class StoreUtils {
     public static double calculateDiscount(double total, double discountRate) {
@@ -76,36 +74,36 @@ public class StoreUtils {
         return users;
     }
 
-    // File I/O for Transactions
-    public static void saveTransactionsToCSV(List<Transaction> transactions, String filename) throws IOException {
+    // File I/O for Sales
+    public static void saveSalesToCSV(List<Sale> sales, String filename) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            writer.println("transactionId,customerType,customerName,totalAmount,discountAmount,finalAmount,paymentType,timestamp");
-            for (Transaction t : transactions) {
+            writer.println("saleId,customerType,customerName,totalAmount,discountAmount,finalAmount,paymentType,timestamp");
+            for (Sale s : sales) {
                 writer.printf("%s,%s,%s,%.2f,%.2f,%.2f,%s,%s%n",
-                    t.getTransactionId(),
-                    t.getCustomer().getCustomerType(),
-                    t.getCustomer().getName(),
-                    t.getTotalAmount(),
-                    t.getDiscountAmount(),
-                    t.getFinalAmount(),
-                    t.getPayment().getClass().getSimpleName(),
-                    t.getTimestamp().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    s.getSaleId(),
+                    s.getCustomer().getCustomerType(),
+                    s.getCustomer().getName(),
+                    s.getTotalAmount(),
+                    s.getDiscountAmount(),
+                    s.getFinalAmount(),
+                    s.getPayment().getClass().getSimpleName(),
+                    s.getTimestamp().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
         }
     }
 
-    // Note: Loading transactions is complex due to object recreation, so we'll implement basic version
-    public static List<String> loadTransactionStringsFromCSV(String filename) throws IOException {
-        List<String> transactions = new ArrayList<>();
+    // Note: Loading sales is complex due to object recreation, so we'll implement basic version
+    public static List<String> loadSaleStringsFromCSV(String filename) throws IOException {
+        List<String> sales = new ArrayList<>();
         File file = new File(filename);
-        if (!file.exists()) return transactions;
+        if (!file.exists()) return sales;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line = reader.readLine(); // Skip header
             while ((line = reader.readLine()) != null) {
-                transactions.add(line);
+                sales.add(line);
             }
         }
-        return transactions;
+        return sales;
     }
 }
