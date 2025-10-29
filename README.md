@@ -30,70 +30,257 @@ RetailStoreGUI/
 └── bin/                        # Compiled .class files
 ```
 
-## 🧩 OOP Concepts Demonstrated
+## 🧩 Object-Oriented Programming (OOP) Concepts Demonstrated
 
-| OOP Concept         | Where it appears                                                   | Description |
-|---------------------|-------------------------------------------------------------------|-------------|
-| **Encapsulation**   | `Product` → private fields with getters                            | Data hiding and controlled access to product properties |
-| **Inheritance**     | `Customer` → `VIPCustomer`                                         | VIPCustomer inherits from Customer, gaining base functionality |
-| **Polymorphism**    | Overridden `getDiscountRate()` and `getCustomerType()`            | Same method names behave differently for different customer types |
-| **Abstraction**     | `Payment` abstract class + `CashPayment`, `CardPayment` subclasses | Abstract payment contract with concrete implementations |
+This project comprehensively demonstrates all four fundamental OOP principles through practical retail store management implementation:
 
-### Detailed OOP Breakdown:
+### 📋 OOP Concepts Overview
 
-#### 1️⃣ **Encapsulation** (Product.java)
+| OOP Concept         | Implementation Location | Real-World Application |
+|---------------------|------------------------|------------------------|
+| **🔒 Encapsulation** | `Product`, `Customer`, `Sale`, `User` classes | Data protection and controlled access |
+| **📈 Inheritance** | `Customer` → `VIPCustomer` hierarchy | Customer type specialization |
+| **🎭 Polymorphism** | Method overriding in customer types & payment methods | Flexible behavior based on object types |
+| **🎯 Abstraction** | `Payment` abstract class with concrete implementations | Payment method abstraction |
+
+---
+
+## 🔍 Detailed OOP Analysis
+
+### 1️⃣ **Encapsulation** - Data Hiding & Access Control
+
+**Implementation**: All model classes use private fields with controlled access through public methods.
+
 ```java
+// Product.java - Encapsulation Example
 public class Product {
-    private String name;      // Private fields
-    private double price;
-    private int quantity;
+    private String name;        // Private: Hidden from external access
+    private double price;       // Private: Protected data integrity
+    private int quantity;       // Private: Controlled stock management
 
-    public String getName() { return name; }  // Public getters
+    // Public getters: Controlled read access
+    public String getName() { return name; }
     public double getPrice() { return price; }
     public int getQuantity() { return quantity; }
+
+    // Constructor: Controlled object creation
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
 }
 ```
-- **Purpose**: Protects data integrity by hiding implementation details
-- **Benefits**: Prevents direct manipulation of data, allows validation
 
-#### 2️⃣ **Inheritance** (Customer.java & VIPCustomer.java)
+**Benefits in Project**:
+- **Data Integrity**: Prevents invalid stock quantities or negative prices
+- **Controlled Access**: Business logic can validate data before storage
+- **Maintainability**: Internal changes don't affect external code
+- **Security**: Sensitive data (like pricing logic) remains hidden
+
+---
+
+### 2️⃣ **Inheritance** - Code Reuse & Hierarchical Relationships
+
+**Implementation**: Customer hierarchy with base functionality inheritance.
+
 ```java
+// Customer.java - Base Class
 public class Customer {
-    protected String name;  // Protected for subclass access
+    protected String name;  // Protected: Accessible to subclasses
 
-    public double getDiscountRate() { return 0; }  // Base discount
+    public Customer(String name) {
+        this.name = name;
+    }
+
+    // Base discount implementation
+    public double getDiscountRate() {
+        return 0.0;  // Regular customers: 0% discount
+    }
+
+    public String getCustomerType() {
+        return "Regular";
+    }
+
+    public String getName() {
+        return name;
+    }
 }
 
+// VIPCustomer.java - Derived Class
 public class VIPCustomer extends Customer {
+    public VIPCustomer(String name) {
+        super(name);  // Call parent constructor
+    }
+
     @Override
-    public double getDiscountRate() { return 0.1; }  // 10% discount
+    public double getDiscountRate() {
+        return 0.1;  // VIP customers: 10% discount
+    }
+
+    @Override
+    public String getCustomerType() {
+        return "VIP";  // Specialized behavior
+    }
 }
 ```
-- **Purpose**: Code reuse and hierarchical relationships
-- **Benefits**: VIPCustomer automatically gets Customer behavior + adds special features
 
-#### 3️⃣ **Polymorphism** (Method Overriding)
-- Same method `getDiscountRate()` returns different values:
-  - `Customer`: 0% discount
-  - `VIPCustomer`: 10% discount
-- **Purpose**: Flexibility in behavior based on object type
-- **Benefits**: Write generic code that works with different implementations
+**Benefits in Project**:
+- **Code Reuse**: VIPCustomer inherits all Customer functionality
+- **Extensibility**: Easy to add new customer types (GoldCustomer, etc.)
+- **Polymorphic Behavior**: Same method calls work differently
+- **Hierarchical Design**: Clear customer type relationships
 
-#### 4️⃣ **Abstraction** (Payment Classes)
+---
+
+### 3️⃣ **Polymorphism** - Same Interface, Different Behaviors
+
+**Implementation**: Method overriding and dynamic method resolution.
+
 ```java
-public abstract class Payment {
-    public abstract void pay(double amount);  // Contract only
+// Polymorphic discount calculation
+public double calculateDiscount(Customer customer) {
+    return customer.getDiscountRate();  // Behaves differently based on actual type
 }
 
+// Usage examples:
+Customer regular = new Customer("John");
+Customer vip = new VIPCustomer("Jane");
+
+calculateDiscount(regular);  // Returns 0.0 (0% discount)
+calculateDiscount(vip);      // Returns 0.1 (10% discount)
+
+// Both are Customer references but behave differently
+```
+
+**Payment Polymorphism**:
+```java
+// Payment abstraction with polymorphic behavior
+Payment payment = paymentType.equals("Cash") ?
+    new CashPayment() : new CardPayment();
+
+payment.pay(amount);  // Same method, different implementations
+```
+
+**Benefits in Project**:
+- **Flexible Checkout**: Same checkout code works for all customer types
+- **Extensible Payments**: Easy to add new payment methods
+- **Generic Processing**: Sales processing works regardless of customer/payment type
+- **Runtime Flexibility**: Behavior determined by actual object type
+
+---
+
+### 4️⃣ **Abstraction** - Hiding Complexity, Showing Essentials
+
+**Implementation**: Abstract Payment class with concrete implementations.
+
+```java
+// Payment.java - Abstract Class
+public abstract class Payment {
+    // Abstract method: Contract that must be implemented
+    public abstract void pay(double amount);
+}
+
+// CashPayment.java - Concrete Implementation
 public class CashPayment extends Payment {
     @Override
     public void pay(double amount) {
         System.out.println("Paid in Cash: Rs. " + amount);
+        // Cash-specific payment logic
+    }
+}
+
+// CardPayment.java - Another Concrete Implementation
+public class CardPayment extends Payment {
+    @Override
+    public void pay(double amount) {
+        System.out.println("Paid by Card: Rs. " + amount);
+        // Card-specific payment logic (validation, processing, etc.)
     }
 }
 ```
-- **Purpose**: Define what to do, not how to do it
-- **Benefits**: Easy to add new payment types (e.g., DigitalWallet) without changing existing code
+
+**Usage in Project**:
+```java
+// Abstraction in action - client code doesn't know implementation details
+Payment payment = createPayment(paymentType);  // Factory method
+payment.pay(finalAmount);  // Works regardless of payment type
+```
+
+**Benefits in Project**:
+- **Simplified Interface**: Checkout code doesn't need payment details
+- **Extensibility**: Add UPI, Wallet payments without changing checkout logic
+- **Modularity**: Payment logic separated from business logic
+- **Testability**: Easy to mock payment behavior for testing
+
+---
+
+## 🏗️ Advanced OOP Patterns in Project
+
+### **Factory Pattern** (Payment Creation)
+```java
+// Service layer creates appropriate payment objects
+Payment payment = paymentType.equals("Cash") ?
+    new CashPayment() : new CardPayment();
+```
+
+### **Strategy Pattern** (Discount Strategies)
+```java
+// Different discount strategies based on customer type
+double discount = customer.getDiscountRate() * totalAmount;
+```
+
+### **Observer Pattern** (Table Model Listeners)
+```java
+// Cart table notifies listeners of quantity changes
+cartTable.getModel().addTableModelListener(e -> {
+    // Automatically update totals and inventory
+});
+```
+
+### **Composition over Inheritance**
+```java
+// Sale class composes Customer, Payment, and Product list
+public class Sale {
+    private Customer customer;      // HAS-A relationship
+    private Payment payment;        // HAS-A relationship
+    private List<Product> products; // HAS-A relationship
+}
+```
+
+---
+
+## 🎯 OOP Principles in Action
+
+### **Single Responsibility Principle (SRP)**
+- `ProductService`: Only handles product operations
+- `CustomerService`: Only manages customer data
+- `SalesService`: Only processes sales transactions
+
+### **Open/Closed Principle (OCP)**
+- Easy to add new customer types without modifying existing code
+- New payment methods can be added without changing checkout logic
+
+### **Liskov Substitution Principle (LSP)**
+- Any `Customer` subclass can be used wherever `Customer` is expected
+- Any `Payment` subclass works with payment processing code
+
+### **Dependency Inversion Principle (DIP)**
+- High-level modules (App) don't depend on low-level modules (specific payment types)
+- Both depend on abstractions (Payment interface)
+
+---
+
+## 📊 OOP Impact on Project Quality
+
+| Quality Attribute | OOP Contribution |
+|------------------|------------------|
+| **Maintainability** | Encapsulated changes don't ripple through codebase |
+| **Extensibility** | New features added without modifying existing code |
+| **Reusability** | Classes can be reused in different contexts |
+| **Testability** | Individual components can be unit tested |
+| **Readability** | Code structure reflects real-world relationships |
+| **Reliability** | Type safety and encapsulation prevent bugs |
 
 ## 🏃 How to Run
 
