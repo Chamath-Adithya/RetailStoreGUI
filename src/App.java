@@ -1,4 +1,6 @@
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
@@ -28,12 +30,8 @@ public class App {
         try {
             inventory = StoreUtils.loadProductsFromCSV("data/products.csv");
             users = StoreUtils.loadUsersFromCSV("data/users.csv");
-            // Load sales data
-            List<String> saleStrings = StoreUtils.loadSaleStringsFromCSV("data/sales.csv");
-            for (String saleStr : saleStrings) {
-                // For simplicity, we'll just count the sales but not fully reconstruct objects
-                // In a full implementation, you'd parse and recreate Sale objects
-            }
+            // Load sales data - properly reconstruct Sale objects
+            sales = loadSalesFromCSV("data/sales.csv");
         } catch (Exception e) {
             // Initialize with default data if files don't exist
             initializeDefaultData();
@@ -43,6 +41,39 @@ public class App {
         if (inventory.isEmpty() || users.isEmpty()) {
             initializeDefaultData();
         }
+    }
+
+    private static List<Sale> loadSalesFromCSV(String filename) {
+        List<Sale> loadedSales = new ArrayList<>();
+        try {
+            List<String> saleStrings = StoreUtils.loadSaleStringsFromCSV(filename);
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+            for (String line : saleStrings) {
+                String[] parts = line.split(",");
+                if (parts.length >= 8) {
+                    String saleId = parts[0];
+                    String customerType = parts[1];
+                    String customerName = parts[2];
+                    double totalAmount = Double.parseDouble(parts[3]);
+                    double discountAmount = Double.parseDouble(parts[4]);
+                    double finalAmount = Double.parseDouble(parts[5]);
+                    String paymentType = parts[6];
+                    LocalDateTime timestamp = LocalDateTime.parse(parts[7], formatter);
+
+                    // Create customer and payment objects
+                    Customer customer = customerType.equals("VIP") ? new VIPCustomer(customerName) : new Customer(customerName);
+                    Payment payment = paymentType.equals("CashPayment") ? new CashPayment() : new CardPayment();
+
+                    // Use the constructor with pre-calculated amounts
+                    Sale sale = new Sale(saleId, customer, payment, totalAmount, discountAmount, finalAmount, timestamp);
+                    loadedSales.add(sale);
+                }
+            }
+        } catch (Exception e) {
+            // If loading fails, return empty list
+            System.err.println("Warning: Could not load sales data: " + e.getMessage());
+        }
+        return loadedSales;
     }
 
     private static void initializeDefaultData() {
@@ -151,8 +182,12 @@ public class App {
             addProductItem.addActionListener(e -> showAddProductDialog());
             JMenuItem removeProductItem = new JMenuItem("Remove Product");
             removeProductItem.addActionListener(e -> removeSelectedProduct());
+            JMenuItem viewSalesItem = new JMenuItem("View Sales History");
+            viewSalesItem.addActionListener(e -> showSalesHistoryDialog());
             adminMenu.add(addProductItem);
             adminMenu.add(removeProductItem);
+            adminMenu.addSeparator();
+            adminMenu.add(viewSalesItem);
             menuBar.add(adminMenu);
         }
 
@@ -191,6 +226,104 @@ public class App {
             }
         };
         cartTable = new JTable(cartTableModel);
+
+        // Add listener to update totals and inventory when quantity is changed
+        cartTable.getModel().addTableModelListener(e -> {
+            int row = e.getFirstRow();
+            int column = e.getColumn();
+            if (column == 2 && row >= 0 && row < cart.size()) { // Quantity column changed
+                try {
+                    int newQuantity = Integer.parseInt(cartTable.getValueAt(row, column).toString());
+                    Product item = cart.get(row);
+                    int oldQuantity = item.getQuantity();
+                    int quantityDifference = newQuantity - oldQuantity;
+
+                    if (newQuantity > 0) {
+                        // Check if we have enough stock for the increase
+                        if (quantityDifference > 0) {
+                            // Find the product in inventory
+                            Product inventoryProduct = null;
+                            int inventoryIndex = -1;
+                            for (int i = 0; i < inventory.size(); i++) {
+                                if (inventory.get(i).getName().equals(item.getName())) {
+                                    inventoryProduct = inventory.get(i);
+                                    inventoryIndex = i;
+                                    break;
+                                }
+                            }
+
+                            if (inventoryProduct != null && inventoryProduct.getQuantity() >= quantityDifference) {
+                                // Update cart
+                                Product updatedItem = new Product(item.getName(), item.getPrice(), newQuantity);
+                                cart.set(row, updatedItem);
+                                cartTable.setValueAt(updatedItem.getTotal(), row, 3);
+
+                                // Update inventory
+                                Product updatedInventory = new Product(inventoryProduct.getName(),
+                                    inventoryProduct.getPrice(),
+                                    inventoryProduct.getQuantity() - quantityDifference);
+                                inventory.set(inventoryIndex, updatedInventory);
+                                updateInventoryTable();
+                            } else {
+                                // Not enough stock, reset to old quantity
+                                cartTable.setValueAt(oldQuantity, row, column);
+                                JOptionPane.showMessageDialog(mainFrame, "Not enough stock available!");
+                            }
+                        } else if (quantityDifference < 0) {
+                            // Quantity decreased, return stock to inventory
+                            Product updatedItem = new Product(item.getName(), item.getPrice(), newQuantity);
+                            cart.set(row, updatedItem);
+                            cartTable.setValueAt(updatedItem.getTotal(), row, 3);
+
+                            // Return stock to inventory
+                            for (int i = 0; i < inventory.size(); i++) {
+                                if (inventory.get(i).getName().equals(item.getName())) {
+                                    Product inventoryProduct = inventory.get(i);
+                                    Product updatedInventory = new Product(inventoryProduct.getName(),
+                                        inventoryProduct.getPrice(),
+                                        inventoryProduct.getQuantity() - quantityDifference); // quantityDifference is negative, so this adds
+                                    inventory.set(i, updatedInventory);
+                                    updateInventoryTable();
+                                    break;
+                                }
+                            }
+                        } else {
+                            // Quantity unchanged, just update cart
+                            Product updatedItem = new Product(item.getName(), item.getPrice(), newQuantity);
+                            cart.set(row, updatedItem);
+                            cartTable.setValueAt(updatedItem.getTotal(), row, 3);
+                        }
+                    } else {
+                        // If invalid quantity, reset to 1
+                        cartTable.setValueAt(1, row, column);
+                        Product updatedItem = new Product(item.getName(), item.getPrice(), 1);
+                        cart.set(row, updatedItem);
+                        cartTable.setValueAt(updatedItem.getTotal(), row, 3);
+
+                        // Return excess stock to inventory
+                        int returnQuantity = oldQuantity - 1;
+                        if (returnQuantity > 0) {
+                            for (int i = 0; i < inventory.size(); i++) {
+                                if (inventory.get(i).getName().equals(item.getName())) {
+                                    Product inventoryProduct = inventory.get(i);
+                                    Product updatedInventory = new Product(inventoryProduct.getName(),
+                                        inventoryProduct.getPrice(),
+                                        inventoryProduct.getQuantity() + returnQuantity);
+                                    inventory.set(i, updatedInventory);
+                                    updateInventoryTable();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (NumberFormatException ex) {
+                    // If invalid input, reset to previous quantity
+                    Product item = cart.get(row);
+                    cartTable.setValueAt(item.getQuantity(), row, column);
+                }
+            }
+        });
+
         JScrollPane cartScroll = new JScrollPane(cartTable);
         cartPanel.add(cartScroll, BorderLayout.CENTER);
 
@@ -296,6 +429,14 @@ public class App {
         Sale sale = new Sale(saleId, customer, cart, payment);
         sales.add(sale);
 
+        // Save the sale immediately to persist data
+        try {
+            new java.io.File("data").mkdirs();
+            StoreUtils.saveSalesToCSV(sales, "data/sales.csv");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(mainFrame, "Warning: Sale recorded but data save failed: " + e.getMessage());
+        }
+
         payment.pay(sale.getFinalAmount());
 
         JOptionPane.showMessageDialog(mainFrame, String.format("Checkout successful!\nTotal: Rs. %.2f\nDiscount: Rs. %.2f\nFinal: Rs. %.2f",
@@ -364,5 +505,50 @@ public class App {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(mainFrame, "Error saving data: " + e.getMessage());
         }
+    }
+
+    private static void showSalesHistoryDialog() {
+        JDialog dialog = new JDialog(mainFrame, "Sales History", true);
+        dialog.setSize(800, 400);
+        dialog.setLayout(new BorderLayout());
+        dialog.setLocationRelativeTo(mainFrame);
+
+        // Sales Table
+        String[] columns = {"Sale ID", "Customer", "Type", "Total", "Discount", "Final", "Payment", "Date"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (Sale sale : sales) {
+            model.addRow(new Object[]{
+                sale.getSaleId(),
+                sale.getCustomer().getName(),
+                sale.getCustomer().getCustomerType(),
+                String.format("Rs. %.2f", sale.getTotalAmount()),
+                String.format("Rs. %.2f", sale.getDiscountAmount()),
+                String.format("Rs. %.2f", sale.getFinalAmount()),
+                sale.getPayment().getClass().getSimpleName(),
+                sale.getTimestamp().toString().replace("T", " ")
+            });
+        }
+
+        JTable salesTable = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(salesTable);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        // Summary Panel
+        JPanel summaryPanel = new JPanel(new FlowLayout());
+        double totalRevenue = sales.stream().mapToDouble(Sale::getFinalAmount).sum();
+        int totalSales = sales.size();
+
+        summaryPanel.add(new JLabel("Total Sales: " + totalSales));
+        summaryPanel.add(new JLabel(" | Total Revenue: Rs. " + String.format("%.2f", totalRevenue)));
+
+        dialog.add(summaryPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
     }
 }

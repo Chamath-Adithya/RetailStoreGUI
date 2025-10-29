@@ -1,8 +1,8 @@
 package model;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Sale {
     private String saleId;
@@ -21,6 +21,19 @@ public class Sale {
         this.payment = payment;
         this.timestamp = LocalDateTime.now();
         calculateAmounts();
+    }
+
+    // Constructor for loading from CSV with pre-calculated amounts
+    public Sale(String saleId, Customer customer, Payment payment,
+                double totalAmount, double discountAmount, double finalAmount, LocalDateTime timestamp) {
+        this.saleId = saleId;
+        this.customer = customer;
+        this.products = new ArrayList<>(); // Empty for loaded sales
+        this.payment = payment;
+        this.totalAmount = totalAmount;
+        this.discountAmount = discountAmount;
+        this.finalAmount = finalAmount;
+        this.timestamp = timestamp;
     }
 
     private void calculateAmounts() {
