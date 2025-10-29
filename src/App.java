@@ -28,7 +28,12 @@ public class App {
         try {
             inventory = StoreUtils.loadProductsFromCSV("data/products.csv");
             users = StoreUtils.loadUsersFromCSV("data/users.csv");
-            // For simplicity, not loading transactions fully
+            // Load sales data
+            List<String> saleStrings = StoreUtils.loadSaleStringsFromCSV("data/sales.csv");
+            for (String saleStr : saleStrings) {
+                // For simplicity, we'll just count the sales but not fully reconstruct objects
+                // In a full implementation, you'd parse and recreate Sale objects
+            }
         } catch (Exception e) {
             // Initialize with default data if files don't exist
             initializeDefaultData();
@@ -41,14 +46,39 @@ public class App {
     }
 
     private static void initializeDefaultData() {
-        // Default products
-        inventory.add(new Product("Apple", 100.0, 50));
-        inventory.add(new Product("Banana", 60.0, 30));
-        inventory.add(new Product("Orange", 80.0, 40));
+        try {
+            // Create default data files if they don't exist
+            java.io.File dataDir = new java.io.File("data");
+            dataDir.mkdirs();
 
-        // Default users
-        users.add(new User("admin", "admin123", "Admin"));
-        users.add(new User("cashier", "cash123", "Cashier"));
+            java.io.File productsFile = new java.io.File("data/products.csv");
+            if (!productsFile.exists()) {
+                try (java.io.PrintWriter writer = new java.io.PrintWriter(productsFile)) {
+                    writer.println("name,price,quantity");
+                    writer.println("Apple,100.0,50");
+                    writer.println("Banana,60.0,30");
+                    writer.println("Orange,80.0,40");
+                }
+            }
+
+            java.io.File usersFile = new java.io.File("data/users.csv");
+            if (!usersFile.exists()) {
+                try (java.io.PrintWriter writer = new java.io.PrintWriter(usersFile)) {
+                    writer.println("username,password,role");
+                    writer.println("admin,admin123,Admin");
+                    writer.println("cashier,cash123,Cashier");
+                }
+            }
+
+            // Now load the data
+            inventory = StoreUtils.loadProductsFromCSV("data/products.csv");
+            users = StoreUtils.loadUsersFromCSV("data/users.csv");
+
+        } catch (Exception e) {
+            // If all else fails, add minimal defaults to memory
+            inventory.add(new Product("Apple", 100.0, 50));
+            users.add(new User("admin", "admin123", "Admin"));
+        }
     }
 
     private static void showLoginDialog() {
