@@ -14,4 +14,8 @@ public class Customer {
     public String getCustomerType() {
         return "Regular";
     }
+
+    public String getName() {
+        return name;
+    }
 }

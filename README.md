@@ -1,12 +1,16 @@
 # Retail Store Management System (GUI Edition)
 
-A Java Swing application demonstrating Object-Oriented Programming (OOP) concepts through a retail store management system.
+A comprehensive Java Swing application demonstrating Object-Oriented Programming (OOP) concepts through a retail store management system with login, inventory management, and transaction processing.
 
 ## 🧱 Project Structure
 
 ```
 RetailStoreGUI/
 ├── README.md
+├── data/               # CSV files for data persistence
+│   ├── products.csv
+│   ├── users.csv
+│   └── transactions.csv
 ├── lib/                # (Empty for now; add .jar libs later if needed)
 ├── bin/                # Compiled .class files
 └── src/                # All your Java source code lives here
@@ -15,12 +19,14 @@ RetailStoreGUI/
     ├── model/          # Data models (Encapsulation + Inheritance)
     │   ├── Product.java
     │   ├── Customer.java
-    │   └── VIPCustomer.java
+    │   ├── VIPCustomer.java
+    │   ├── User.java
+    │   └── Transaction.java
     ├── payment/        # Abstraction examples (Payment types)
     │   ├── Payment.java
     │   ├── CashPayment.java
     │   └── CardPayment.java
-    └── utils/          # Optional utilities (helpers, calculations)
+    └── utils/          # Utilities (helpers, calculations, file I/O)
         └── StoreUtils.java
 ```
 
@@ -102,18 +108,38 @@ java main.App
 
 ## 🎯 Features
 
-- **Product Management**: Enter product name, price, and quantity
+- **User Authentication**: Login system with Admin and Cashier roles
+- **Inventory Management**: JTable display of products with stock levels
+- **Shopping Cart**: Add/remove products to/from cart with JTable display
+- **Stock Management**: Real-time stock updates, add/remove products (Admin only)
 - **Customer Types**: Regular customers (0% discount) and VIP customers (10% discount)
-- **Payment Methods**: Cash or Card payment processing
-- **GUI Interface**: User-friendly Swing interface for all operations
-- **Real-time Calculation**: Automatic total calculation with discounts applied
+- **Payment Methods**: Cash or Card payment processing with transaction records
+- **Data Persistence**: CSV file storage for products, users, and transactions
+- **GUI Interface**: Comprehensive Swing interface with tables, menus, and dialogs
+- **Transaction Processing**: Complete checkout with discount calculation and payment
+- **Role-based Access**: Different features available based on user role
 
-## 🌱 Future Upgrades
+### Additional OOP Concepts in New Features:
 
-* Add a **JTable** to show all purchased items
-* Save data to a **file (CSV or JSON)**
-* Add login (Admin / Cashier)
-* Add stock management (add/remove product)
+#### 5️⃣ **Composition** (Transaction.java)
+```java
+public class Transaction {
+    private Customer customer;
+    private List<Product> products;
+    private Payment payment;
+    // ... contains multiple objects working together
+}
+```
+- **Purpose**: Build complex objects from simpler ones
+- **Benefits**: Flexible relationships between classes
+
+#### 6️⃣ **Polymorphism in Collections** (StoreUtils.java)
+```java
+public static void saveProductsToCSV(List<Product> products, String filename)
+public static void saveUsersToCSV(List<User> users, String filename)
+```
+- **Purpose**: Generic methods that work with different types
+- **Benefits**: Code reuse and type safety
 
 ## 📚 Learning Objectives
 
